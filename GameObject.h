@@ -7,23 +7,28 @@
 #include <time.h>
 #include <assert.h>
 
+const int nr_of_old_coordinates = 8;
+const int nr_of_cases = 4;
+const int nr_of_edges = 4;
+const int n = 15;
+
 class GameObject {
 protected:
     int x, y;  /// coordonate
-    std::string type; /// Explored, Seeker, Treasure, Unexplored
+    std::string type; // seeker, treasure, unexplored, x (explored)
 public:
     GameObject(int abs, int ord, std::string str): x(abs), y(ord), type(str) {};
     virtual ~GameObject() = 0;
     const int getX();
     const int getY();
     const std::string getType();
-    friend class Treasure;
 };
 
 class Seeker:public GameObject {
 public:
     Seeker(int n, int edge, int abs, int ord, std::string str):GameObject(abs, ord, str) {
         assert(1 <= edge && edge <= 4);
+        //In switch se alege pe ce colt o sa fie pus un player ce a primit un anume edge
         switch (edge) {
             case 1:
                 x = 1; y = 1;
@@ -39,10 +44,13 @@ public:
         }
     }
     ~Seeker();
+    //Won scoate un jucator din harta in cazul in care a castigat
     const void won(std::string rank);
+    //Virtual ce pune baza conceptului urmatoarelor subclase
     virtual int nextStep();
 };
 
+//Seeker ce cauta in linie dreapta
 class SeekerStraight:public Seeker {
 private:
     int counter;
@@ -52,6 +60,7 @@ public:
     const int nextStep(std::string** M);
 };
 
+//Seeker ce cauta in diagonala
 class SeekerDiagonal:public Seeker {
 private:
     int counter;
@@ -61,6 +70,7 @@ public:
     const int nextStep(std::string** M);
 };
 
+//Seeker ce cauta 2 patratele pe orizontala, apoi 1 pe verticala
 class SeekerSegment:public Seeker {
 private:
     int counter;
@@ -70,6 +80,8 @@ public:
     const int nextStep(std::string** M);
 };
 
+//Seeker ce cauta in zigzag, o data in sensul diagonalei principale,
+// o data in sensul diagonalei secundare
 class SeekerZigzag: public Seeker {
     int counter;
 public:
@@ -78,13 +90,9 @@ public:
     const int nextStep(std::string** M);
 };
 
-
-const int nr_of_cases = 4;
-const int nr_of_edges = 4;
-const int n = 15;
-
 class Treasure;
 
+//Clasa ce manageriaza jocul
 class Map {
 protected:
     const int size;
@@ -110,7 +118,9 @@ public:
     const int getSize();
     std::string** getMatrix();
     const void setMatrix(int x, int y, std::string type);
+    //supraincarcarea operatorului <<
     friend std::ostream &operator<< (std::ostream &out, Map &m);
+    //functia ce ruleaza intregul joc
     friend void runGame();
     friend class Treasure;
     friend class SeekerStraight;
@@ -127,6 +137,8 @@ public:
     Treasure(std::string** M, int n, int abs, int ord, std::string str):GameObject(abs, ord, str) {
         srand (time(NULL));
         found = false;
+        //se selecteaza aleatoriu 2 coordonate si se verifica daca nu
+        //se intersecteaza cu alta comoara sau cu un colt
         x = rand() % n + 1;
         y = rand() % n + 1;
         while ((M[x][y] == "treasure") || (x == 1 && y == 1)
@@ -137,10 +149,9 @@ public:
     }
     ~Treasure();
     void setFound(bool ok);
-    bool getFound();  ///Daca da, afara player-ul de pe casuta aia, cu tot cu comoara
+    bool getFound();
 };
 
 void runGame();
-
 
 #endif // GameObject_H
